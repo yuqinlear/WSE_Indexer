@@ -92,11 +92,12 @@ public class Test_file_bit {
             Vector<Index> file_index = read_index(filename_index);  
             Vector<String> pages = read_page(filename_data, file_index); 
             
-            index.postingMap = new TreeMap<String,HashMap<Integer,TermInDoc>> ();
+            index.postingMap = new TreeMap<String,HashMap<Integer,Integer>> ();
             for(int i = 0; i<pages.size(); i++)
             {
             	StringBuilder strbuilder=new StringBuilder();
-            	System.out.println(Parser.parseDoc("http://www.testparser.com",pages.elementAt(i),strbuilder));
+//            	System.out.println();
+            	Parser.parseDoc("http://www.testparser.com",pages.elementAt(i),strbuilder);
             	//write parse result into files
             	if(strbuilder.length() == 0)
         		{
@@ -110,7 +111,7 @@ public class Test_file_bit {
         			String[] word=line.split(" ");
         			if(word.length == 2)
         			{
-            			index.inSertIntoPostingMap(word[0], document_ID, convertStrToByte(word[1]));//insert into 
+            			index.inSertIntoPostingMap(word[0], document_ID);//insert into 
         			}
         			//add to lexicon file_index and Inverted file_index
         		}
@@ -138,15 +139,15 @@ public class Test_file_bit {
 	      	             while (ilter2.hasNext())
 	      	             {
 	      	            	 Map.Entry entry2 = (Map.Entry) ilter2.next();
-	      	                 int docID = (int) entry2.getKey();
-	      	                 TermInDoc term = (TermInDoc) entry2.getValue();
-	      	                 Iterator  ilter3= term.contexts.iterator();
-	      	                 post_string += docID+" "+term.termFreq+" ";
-	      	                 while (ilter3.hasNext())
-	      	                 {
-	      	                	 post_string += new String(new byte [] {(byte)ilter3.next()});
-	      	                 }
-	      	               post_string += " ";
+	      	                 int docID = (int)entry2.getKey();
+	      	                 int freq = (int)entry2.getValue();
+//	      	                 Iterator  ilter3= term.contexts.iterator();
+	      	                 post_string += docID+" "+freq+" ";
+//	      	                 while (ilter3.hasNext())
+//	      	                 {
+//	      	                	 post_string += new String(new byte [] {(byte)ilter3.next()});
+//	      	                 }
+//	      	               post_string += " ";
 	      	             }
 	      	             System.out.println(post_string);
 	      	             fout.write(post_string+"\n");
@@ -165,7 +166,7 @@ public class Test_file_bit {
     	//merge inverted index
     	//linux sort all the files
     	//generate linux sort command
-    	String command = new String("sort -d");
+    	String command = new String("sort -k1,1d -k2,2n");
     	for(int i=0; i<83; i++)
     	{
     		command += " result/inverted_index_"+i+".txt";
@@ -189,10 +190,10 @@ public class Test_file_bit {
 				fout=new OutputStreamWriter(new FileOutputStream(Integer.toString(filename)));
 			}
 			word=line.split(" ");
-			line_without_word=word[1]+" "+word[2]+word[3];
+			line_without_word=line.substring(word[0].length());
 			temp_lexinfo=index.lexiconMap.get(word[0]);
 			index.inSertIntoLexMap(word[0],filename,index_position);
-			if(temp_lexinfo==null){// this word inserted first time after merge
+			if(temp_lexinfo==null){// this word inserted first time after merge;
 				fout.write("\n"+line_without_word); // or directly append this line;
 				index_position+=line_without_word.length()+1;			
 			}else{

@@ -10,9 +10,9 @@ public class WordMap {
 	/* postingMap:
 	 *  1.Map a word to all postings belonging to it; 
 	 *  2. Map TermInDoc objects to a specific doc in the postings of the specific word;
-	 *  3. There are term frequency and all contexts(LinkedList) stored for the specific document of the  specific word;
+	 *  3. There are term frequency stored for the specific document of the  specific word;
 	 */
-	public TreeMap<String,HashMap<Integer,TermInDoc>> postingMap;
+	public TreeMap<String, HashMap<Integer, Integer>> postingMap;
 	
 	/*urlDocMap:
 	 * 1. Map a document ID to a UrlDocLen object;
@@ -64,21 +64,22 @@ public class WordMap {
 	 * tempDocMap is a map from a docId of the give word to a TermInDoc object;
 	 * TermInDoc object store all contexts and the term frequency of a given word in a give DocId
 	 */
-	public void inSertIntoPostingMap(String word,Integer docId, Byte context){
-		HashMap<Integer,TermInDoc> termDocMap=postingMap.get(word); // find the termDocMap for the give map;	
-		if(termDocMap==null){    // the word is first time occurs;
-			termDocMap=new HashMap<Integer,TermInDoc>();
-			termDocMap.put(docId,new TermInDoc(context)); // put the doc ID and context into termDocMap;
-			postingMap.put(word, termDocMap);
+	public void inSertIntoPostingMap(String word,Integer docId){
+		HashMap<Integer, Integer> termFreqMap=postingMap.get(word); // find the termDocMap for the give map;	
+		if(termFreqMap==null){    // the word is first time occurs;
+			termFreqMap=new HashMap<Integer,Integer>();
+			termFreqMap.put(docId,1); // put the doc ID and context into termDocMap;
+			postingMap.put(word, termFreqMap);
 		}else{   // there is a mapping for this word;
-			TermInDoc tempTermInDoc=termDocMap.get(docId);// the temp TermInDoc object mapped from the given docId;
-			if (tempTermInDoc==null){  // the Docment ID with the given word was not inserted before
-				termDocMap.put(docId,new TermInDoc(context)); // put the doc ID and context into termDocMap;
+			Integer freq=termFreqMap.get(docId);// the freq mapped from the given docId;
+			if (freq==null){  // the Docment ID with the given word was not inserted before
+				termFreqMap.put(docId,1); // put the doc ID into termFreqMap;
+				postingMap.put(word, termFreqMap);
 //				inSertIntoLexMap(word);// update the lexicon map by this word;
 			}else{// document ID was existed in the map of the given word;
-				tempTermInDoc.contexts.add(context);  // add the context of the given word in the given docId;
-				tempTermInDoc.termFreq++; // increment the term frequency of the given word in the docId;
-				postingMap.put(word, termDocMap);
+				freq++; // increment the term frequency of the given word in the docId;
+				termFreqMap.put(docId,freq);
+				postingMap.put(word, termFreqMap);
 			}
 		}
 	}
@@ -89,15 +90,15 @@ public class WordMap {
 } 
 
 /*a class to store all contexts and the term frequency of a given word in a give DocId*/
-class TermInDoc{
-	int termFreq; //term frequency in a document;
-	List<Byte> contexts;  // all contexts of the given word in a document;
-	public TermInDoc(Byte context){
-		contexts=new LinkedList<Byte>();
-		contexts.add(context);
-		termFreq=1;
-	}
-}
+//class TermInDoc{
+//	int termFreq; //term frequency in a document;
+//	List<Byte> contexts;  // all contexts of the given word in a document;
+//	public TermInDoc(Byte context){
+//		contexts=new LinkedList<Byte>();
+//		contexts.add(context);
+//		termFreq=1;
+//	}
+//}
 
 
 /*a class to store the url and document length of a given docId*/
