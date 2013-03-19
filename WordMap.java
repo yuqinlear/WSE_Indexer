@@ -64,20 +64,20 @@ public class WordMap {
 	 * tempDocMap is a map from a docId of the give word to a TermInDoc object;
 	 * TermInDoc object store all contexts and the term frequency of a given word in a give DocId
 	 */
-	public void inSertIntoPostingMap(String word,Integer docId){
+	public void inSertIntoPostingMap(String word,Integer docId,int contextWeight){
 		HashMap<Integer, Integer> termFreqMap=postingMap.get(word); // find the termDocMap for the give map;	
 		if(termFreqMap==null){    // the word is first time occurs;
 			termFreqMap=new HashMap<Integer,Integer>();
-			termFreqMap.put(docId,1); // put the doc ID and context into termDocMap;
+			termFreqMap.put(docId,contextWeight); // put the doc ID and context into termDocMap;
 			postingMap.put(word, termFreqMap);
 		}else{   // there is a mapping for this word;
 			Integer freq=termFreqMap.get(docId);// the freq mapped from the given docId;
 			if (freq==null){  // the Docment ID with the given word was not inserted before
-				termFreqMap.put(docId,1); // put the doc ID into termFreqMap;
+				termFreqMap.put(docId,contextWeight); // put the doc ID into termFreqMap;
 				postingMap.put(word, termFreqMap);
 //				inSertIntoLexMap(word);// update the lexicon map by this word;
 			}else{// document ID was existed in the map of the given word;
-				freq++; // increment the term frequency of the given word in the docId;
+				freq+=contextWeight; // increment the term frequency of the given word in the docId;
 				termFreqMap.put(docId,freq);
 				postingMap.put(word, termFreqMap);
 			}
@@ -86,6 +86,14 @@ public class WordMap {
 	
 	public Byte convertStrToByte(String str){
 		return (byte)str.charAt(0);		
+	}
+	
+	public static int contextWeight(String context){
+		switch(context){
+			case "P":	return 1;
+			case "T":	return 3;
+			default: return 2;
+		}
 	}
 } 
 

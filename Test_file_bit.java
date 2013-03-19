@@ -107,11 +107,12 @@ public class Test_file_bit {
             	System.out.println("page  "+document_ID+": \n"+strbuilder);
             	
             	String[] lines=strbuilder.toString().split("\n");
+            	int contextWeight;
         		for (String line:lines){
         			String[] word=line.split(" ");
         			if(word.length == 2)
         			{
-            			index.inSertIntoPostingMap(word[0], document_ID);//insert into 
+            			index.inSertIntoPostingMap(word[0], document_ID,WordMap.contextWeight(word[1]));//insert into 
         			}
         			//add to lexicon file_index and Inverted file_index
         		}
@@ -174,35 +175,46 @@ public class Test_file_bit {
     	System.out.println(command);
 		Process cmdProc = Runtime.getRuntime().exec(command);
 
-		OutputStreamWriter fout = new OutputStreamWriter(new FileOutputStream("0"));
+//		OutputStreamWriter fout = new OutputStreamWriter(new FileOutputStream("0"));
 		BufferedReader stdoutReader = new BufferedReader(
 		         new InputStreamReader(cmdProc.getInputStream()));
 		String line,line_without_word;
 		int index_position=0,filename=0;
 		int line_number=1;
 		int[] temp_lexinfo ;
+		Binary file_write = new Binary();
+		file_write.initial_output(filename);
 		while ((line = stdoutReader.readLine()) != null) {
 			String word[];
 			if ((line_number&0xFFFF)==0xFFFF){
 				index_position=0;
-		        fout.close();
+//		        fout.close();
+				file_write.output.close();
 		        filename=line_number;// using line number as the name of index file gives more convenience for observation;
-				fout=new OutputStreamWriter(new FileOutputStream(Integer.toString(filename)));
+//				fout=new OutputStreamWriter(new FileOutputStream(Integer.toString(filename)));
+		        file_write.initial_output(filename);
 			}
 			word=line.split(" ");
 			line_without_word=line.substring(word[0].length());
 			temp_lexinfo=index.lexiconMap.get(word[0]);
+			//need edit
 			index.inSertIntoLexMap(word[0],filename,index_position);
+			//add compress and write into binary file
 			if(temp_lexinfo==null){// this word inserted first time after merge;
-				fout.write("\n"+line_without_word); // or directly append this line;
+			//compress line_without_word and write into file
+//				fout.write("\n"+line_without_word); // or directly append this line;
 				index_position+=line_without_word.length()+1;			
 			}else{
-				fout.write(line_without_word); //change to new line when meet a new word;
+				//compress line_without_word and write into file
+//				fout.write(line_without_word); //change to new line when meet a new word;
 				index_position+=line_without_word.length();			
 			}
 			line_number++;
 		}
-        fout.close();
+//        fout.close();
+		file_write.output.close();
+		
+		//print error of linux sort
 		BufferedReader stderrReader = new BufferedReader(
 		         new InputStreamReader(cmdProc.getErrorStream()));
 		while ((line = stderrReader.readLine()) != null) {
