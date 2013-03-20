@@ -15,20 +15,15 @@ public class VB {
     
     public static List<Byte> VB_Compress(int n) {
         List<Byte> bytes = new ArrayList<Byte>();
-        while (true) {
-                bytes.add((byte)(n%128));
-                if (n < 128) 
-                        break;
-                n = n / 128;
-        }
-        byte last  = bytes.get( bytes.size()-1 );
-        if(bytes.size() >1)
-        	bytes.set( bytes.size()-1, (byte)(last | 0x80) ); //Achieves the effect of += 128. 
-		                                                      //This is done like that because 
-		                                                      //Java doesn't have unsigned byte.
-        List<Byte> tmp = new ArrayList<Byte>();//the highest bit is at the last, convert the order
-        for (int i=0; i<bytes.size(); i++) tmp.add(bytes.get(bytes.size()-i-1));
-        return tmp;
+        bytes.add(0,(byte)(n%128));
+        n = n / 128;
+        while (n>0) 
+        {
+        	byte tmp = (byte)(n%128);
+            bytes.add(0,(byte)(tmp | 0x80));//This is done like that because ,Java doesn't have unsigned byte.
+            n = n / 128;
+        }                                                 
+        return bytes;
     }
     
  /*
@@ -42,6 +37,21 @@ public class VB {
     
     public static byte[] VBENCODE(List<Integer> numbers) {
         List<Byte> bytestream_l = new ArrayList<Byte>();
+        
+        for (Integer n : numbers) {
+                List<Byte> bytes = VB_Compress(n);
+                bytestream_l.addAll(bytes);
+        }
+        
+        //Convert result to byte[], then return. 
+        byte[] bytestream = new byte[bytestream_l.size()];
+        for (int i=0; i<bytestream_l.size(); i++) bytestream[i] = bytestream_l.get(i); 
+        return bytestream;
+    }
+    
+    public static byte[] VBENCODE(int[] numbers) {
+        List<Byte> bytestream_l = new ArrayList<Byte>();
+        
         for (Integer n : numbers) {
                 List<Byte> bytes = VB_Compress(n);
                 bytestream_l.addAll(bytes);
@@ -89,11 +99,9 @@ public class VB {
 //        List<Integer> numbers = new ArrayList<Integer>();
 //        numbers.add(2); 
 ////        numbers.add(120); 
-//        numbers.add(130);
+//        numbers.add(65536);
 ////        numbers = VB.VBDECODE( VB.VBENCODE(numbers) );
 //        byte[] result = VB.VBENCODE(numbers);
-//        Binary test1 = new Binary();
-//        test1.write(result, "VB_result");
 //        System.out.println("Finish");   
 //    }
 }

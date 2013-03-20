@@ -37,16 +37,17 @@ public class WordMap {
 	/* insert a word into lexiconMap,  if it is existed, increment its document frequency;
 	 * Note: increment the document frequency ONLY ONCE for each file;
 	 */
-	public void inSertIntoLexMap(String word,int file_num,int file_offset){
+	public void inSertIntoLexMap(String word,int fileNum,int startOffset,int endOffset,int chunkNum){
 		int[] lexInfo=lexiconMap.get(word); //get the array of (time frequency + posting index) info of the give word;
 		if(lexInfo==null){  //if the lexicon is not existed
-			lexInfo=new int[3];
+			lexInfo=new int[4];
 			lexInfo[0]=1;  //document frequency;
-			lexInfo[1]=file_num; // index file number;
-			lexInfo[2]=file_offset; //offset in the index file;
+			lexInfo[1]=fileNum; // index file number;
+			lexInfo[2]=startOffset; //start point of the inverted list in the index file;
+			lexInfo[3]=endOffset;//end point of the inverted list in the index file;;
+			lexInfo[4]=chunkNum; //how many chunks for this inverted list;(The actual chunk number should be doubled because DocId chunks and frequency chunks are separated)
 			lexiconMap.put(word,lexInfo);
 		}else{ //if existed, increment document frequency
-			//lexInfo[0]++;
 //			int temp = lexInfo.elementAt(0)+1;
 //			lexInfo.setElementAt(temp, 0);
 			lexInfo[0]++;
@@ -78,6 +79,7 @@ public class WordMap {
 //				inSertIntoLexMap(word);// update the lexicon map by this word;
 			}else{// document ID was existed in the map of the given word;
 				freq+=contextWeight; // increment the term frequency of the given word in the docId;
+				if(freq>255) {freq=255;}
 				termFreqMap.put(docId,freq);
 				postingMap.put(word, termFreqMap);
 			}
