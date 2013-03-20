@@ -102,6 +102,5 @@ public class VB {
 //        numbers.add(65536);
 ////        numbers = VB.VBDECODE( VB.VBENCODE(numbers) );
 //        byte[] result = VB.VBENCODE(numbers);
-//        System.out.println("Finish");   
-//    }
+
 }

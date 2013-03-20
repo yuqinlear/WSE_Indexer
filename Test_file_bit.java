@@ -315,10 +315,8 @@ public class Test_file_bit {
 			            	{
 //			            		System.out.println("finish");
 			            		break;
-			            	}
-			            	
-			            	buffer = new char[file_index.elementAt(number).doc_length];
-			            	
+			            	}			            	
+			            	buffer = new char[file_index.elementAt(number).doc_length];			            	
 			            }
 			                
 		                gzipReader.close();
