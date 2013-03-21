@@ -1,9 +1,13 @@
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileInputStream;  
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;  
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.util.ArrayList;
@@ -14,7 +18,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.Vector;
 import java.util.zip.GZIPInputStream;  
-import java.util.zip.GZIPOutputStream;  
   
 class Index
 {
@@ -129,16 +132,17 @@ public class Test_file_bit {
 		Process cmdProc = Runtime.getRuntime().exec(command);
 
 //		OutputStreamWriter fout = new OutputStreamWriter(new FileOutputStream("0"));
+		OutputStream fout = new BufferedOutputStream(new FileOutputStream("0"),128*1024);
 		BufferedReader stdoutReader = new BufferedReader(new InputStreamReader(cmdProc.getInputStream()));
 		String line, previousWord;		
-		int offset=0,startOffset=0,lengthByBytes=0,filename=0,chunkNum=0,wordTotalNum=0;
+		int offset=0,startOffset=0,filename=0,chunkNum=0,wordTotalNum=0,docFreq;
 		int[] temp_lexinfo,chunk ;
 		String word[]={" "};//initialize the first word;
-		byte[] metadata, compressedChunk;
+		byte[] metadata, compressedChunk = null;
 		List<Integer> docIDsInList=new ArrayList<Integer>();
 		List<Byte> freqsInList=new ArrayList<Byte>();	
-		Binary file_write = new Binary();
-		file_write.initial_output(filename);
+//		Binary file_write = new Binary();
+//		file_write.initial_output(filename);
 		//read lines after merge
 		while ((line = stdoutReader.readLine()) != null) {
 			previousWord=word[0];
@@ -146,17 +150,18 @@ public class Test_file_bit {
 			temp_lexinfo=index.lexiconMap.get(word[0]);    		
 			if(temp_lexinfo==null){// if we read a new word, we make up the inverted list of the last word;
 				//make chunks for the previous word;
-				chunkNum=docIDsInList.size()/64 +1;
+				docFreq=docIDsInList.size(); // the docID number of the given word;
+				chunkNum=docFreq/64 +1;
 				startOffset=offset;
-				metadata = new byte[docIDsInList.size()/64 +1];
+				metadata = new byte[docFreq/64 +1];
 				offset += chunkNum;				
 				for(int i=0; i<chunkNum; i++)
 				{
-					if((i+1)*64 > docIDsInList.size())
+					if((i+1)*64 > docFreq)
 					{
-						chunk=new int[docIDsInList.size()-i*64];
+						chunk=new int[docFreq-i*64];
 						chunk[0]=docIDsInList.get(i*64);
-						for (int j=i*64+1;j<docIDsInList.size();j++){
+						for (int j=i*64+1;j<docFreq;j++){
 							chunk[j-i*64]=docIDsInList.get(j)-docIDsInList.get(j-1);
 						}
 						compressedChunk = VB.VBENCODE(chunk);
@@ -181,15 +186,25 @@ public class Test_file_bit {
 				/***
 				 * write chunks into file
 				 */
-				index.inSertIntoLexMap(previousWord,filename,startOffset,offset,chunkNum);
+				fout.write(metadata);// 1. write meta data;
+				fout.write(compressedChunk);// 2.write compressed docId chunks
+				byte[] termfreqs = new byte[freqsInList.size()];
+				for(int i=0; i<freqsInList.size(); i++){ 
+					termfreqs[i] = freqsInList.get(i).byteValue();
+				}
+				fout.write(termfreqs); //3.write doc frequency right after docId chunks
+				/*insert the lexinfo to lexicon map*/
+				index.inSertIntoLexMap(previousWord,docFreq,filename,startOffset,offset,chunkNum);
+				/*check out inverted index file*/
 				wordTotalNum++;
 				if ((wordTotalNum&0xFFF)==0xFFF){// store 4096 words in one index file;
 					startOffset=0;
-//			        fout.close();
-					file_write.output.close();
+					fout.flush();//force to write out the buffer;
+			        fout.close();
+//					file_write.output.close();			        
 			        filename=wordTotalNum;// using words number as the name of index file gives more convenience for observation;
-//					fout=new OutputStreamWriter(new FileOutputStream(Integer.toString(filename)));
-			        file_write.initial_output(filename);
+					fout = new BufferedOutputStream(new FileOutputStream(Integer.toString(filename)),128*1024);
+//			        file_write.initial_output(filename);
 				}
 				//make new docIDsInList and freqsInList
 				docIDsInList=new ArrayList<Integer>();
@@ -205,8 +220,8 @@ public class Test_file_bit {
 				}
 			}
 		}
-//        fout.close();
-		file_write.output.close();
+		//TODO write the last word!!
+        fout.close();
 		
 		//print error of linux sort
 		BufferedReader stderrReader = new BufferedReader(
@@ -224,7 +239,7 @@ public class Test_file_bit {
 		System.out.println("start write url index into file");
 		Iterator ilter1= index.urlDocMap.entrySet().iterator();
 		try {
-			OutputStreamWriter fout2 = new OutputStreamWriter(new FileOutputStream("result/url_index.txt"));
+			BufferedWriter fout2 = new BufferedWriter(new FileWriter("result/url_index.txt"));
 			while (ilter1.hasNext())
 	        {
 				String url_string = new String();//store every line of url_index
@@ -235,6 +250,7 @@ public class Test_file_bit {
 				System.out.println(url_string);
 	            fout2.write(url_string+"\n");
 	        }
+			fout2.flush();
 			fout2.close();
 		}
 		catch(IOException e)
@@ -247,7 +263,8 @@ public class Test_file_bit {
 		ilter1= index.lexiconMap.entrySet().iterator();
 		String theWord;
 		try {
-			OutputStreamWriter fout2 = new OutputStreamWriter(new FileOutputStream("result/lexicon_index.txt"));
+//			OutputStreamWriter fout2 = new OutputStreamWriter(new FileOutputStream("result/lexicon_index.txt"));
+			BufferedWriter fout2 = new BufferedWriter(new FileWriter("result/lexicon_index.txt"));
 			while (ilter1.hasNext())
 	        {
 				String lexicon_string = new String();//store every line of url_index
@@ -258,6 +275,7 @@ public class Test_file_bit {
 	            lexicon_string += theWord+" "+tf_offset[0]+" "+tf_offset[1]+" "+tf_offset[2];
 	            fout2.write(lexicon_string+"\n");
 	        }
+			fout2.flush();
 			fout2.close();
 		}
 		catch(IOException e)

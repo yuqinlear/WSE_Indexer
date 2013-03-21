@@ -37,22 +37,20 @@ public class WordMap {
 	/* insert a word into lexiconMap,  if it is existed, increment its document frequency;
 	 * Note: increment the document frequency ONLY ONCE for each file;
 	 */
-	public void inSertIntoLexMap(String word,int fileNum,int startOffset,int endOffset,int chunkNum){
+	public void inSertIntoLexMap(String word,int docFreq,int filename,int startOffset,int endOffset,int chunkNum){
 		int[] lexInfo=lexiconMap.get(word); //get the array of (time frequency + posting index) info of the give word;
-		if(lexInfo==null){  //if the lexicon is not existed
-			lexInfo=new int[4];
-			lexInfo[0]=1;  //document frequency;
-			lexInfo[1]=fileNum; // index file number;
+//		if(lexInfo==null){  //if the lexicon is not existed
+			lexInfo=new int[5];
+			lexInfo[0]=docFreq;  //document frequency;
+			lexInfo[1]=filename; // index file number;
 			lexInfo[2]=startOffset; //start point of the inverted list in the index file;
 			lexInfo[3]=endOffset;//end point of the inverted list in the index file;;
 			lexInfo[4]=chunkNum; //how many chunks for this inverted list;(The actual chunk number should be doubled because DocId chunks and frequency chunks are separated)
 			lexiconMap.put(word,lexInfo);
-		}else{ //if existed, increment document frequency
-//			int temp = lexInfo.elementAt(0)+1;
-//			lexInfo.setElementAt(temp, 0);
-			lexInfo[0]++;
-			lexiconMap.put(word, lexInfo);
-		}
+//		}else{ //if existed, increment document frequency
+//			lexInfo[0]++;
+//			lexiconMap.put(word, lexInfo);
+//		}
 	}
 	
 	/* insert the url and document length into the urlDocMap for the give doc ID;
@@ -120,3 +118,25 @@ class UrlDocLen{
 		this.docLen=docLen;
 	}
 }
+
+
+/* insert a word into lexiconMap,  if it is existed, increment its document frequency;
+ * Note: increment the document frequency ONLY ONCE for each file;
+ */
+//public void inSertIntoLexMap(String word,int fileNum,int startOffset,int endOffset,int chunkNum){
+//	int[] lexInfo=lexiconMap.get(word); //get the array of (time frequency + posting index) info of the give word;
+//	if(lexInfo==null){  //if the lexicon is not existed
+//		lexInfo=new int[4];
+//		lexInfo[0]=1;  //document frequency;
+//		lexInfo[1]=fileNum; // index file number;
+//		lexInfo[2]=startOffset; //start point of the inverted list in the index file;
+//		lexInfo[3]=endOffset;//end point of the inverted list in the index file;;
+//		lexInfo[4]=chunkNum; //how many chunks for this inverted list;(The actual chunk number should be doubled because DocId chunks and frequency chunks are separated)
+//		lexiconMap.put(word,lexInfo);
+//	}else{ //if existed, increment document frequency
+////		int temp = lexInfo.elementAt(0)+1;
+////		lexInfo.setElementAt(temp, 0);
+//		lexInfo[0]++;
+//		lexiconMap.put(word, lexInfo);
+//	}
+//}
