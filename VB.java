@@ -80,17 +80,17 @@ public class VB {
         List<Integer> numbers = new ArrayList<Integer>();
         int n = 0;
         for (int i=0; i<bytestream.length; i++) {
-                if ( (bytestream[i] & (byte)(0x80)) == 0 )  
+                if ( (bytestream[i] & (byte)(0x80)) == 0 ){
                         n = 128*n + bytestream[i];
-                else {
-                        byte b = (byte)(bytestream[i] & 0x7F); //Achieves the effect of -= 128. 
-                                                                                                                   //This is done like that because 
-                                                                                                                   //Java doesn't have unsigned byte.
-                        n = 128*n + b;
                         numbers.add(n);
                         n = 0;
                 }
+                else {
+                        byte b = (byte)(bytestream[i] & 0x7F); //Achieves the effect of -= 128. 
+                        n = 128*n + b;
+                }
         }
+        
         return numbers;
     }
     
@@ -98,9 +98,12 @@ public class VB {
 //        //Testing
 //        List<Integer> numbers = new ArrayList<Integer>();
 //        numbers.add(2); 
-////        numbers.add(120); 
+//        numbers.add(120); 
 //        numbers.add(65536);
-////        numbers = VB.VBDECODE( VB.VBENCODE(numbers) );
-//        byte[] result = VB.VBENCODE(numbers);
-
+//        byte[] tmp = VB.VBENCODE(numbers);
+//        numbers = VB.VBDECODE(tmp);
+////        byte[] result = VB.VBENCODE(numbers);
+//        System.out.println("Finish");   
+//        System.out.println(numbers);
+//    }
 }
