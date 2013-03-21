@@ -7,7 +7,19 @@ public class LFUCache<K,V> {
 
 	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		LFUCache<Integer, String> cache=new LFUCache<Integer,String>(5);
+		cache.put(1, "1");
+		cache.put(2, "1");
+		cache.put(3, "1");
+		cache.put(4, "1");
+		cache.put(5, "1");
+		cache.get(5);
+//		cache.put(6, "1");
+//		cache.put(1, "1");
+//		cache.put(1, "1");
+//		cache.put(1, "1");
+//		cache.put(1, "1");
+		System.out.println(cache.queue.peek());
 
 	}
 	
@@ -28,9 +40,11 @@ public class LFUCache<K,V> {
 	
 	public synchronized void put(K key,V value){
 		//
-		if(cacheMap.containsKey(key)){
-			return;
+        if(cacheMap.containsKey(key)) {
+            Item item = cacheMap.remove(key);
+            queue.remove(item);
 		}
+        
 		if (queue.size()>=maxSize){
 			Item item=queue.remove();
 			cacheMap.remove(item.key);
@@ -44,24 +58,23 @@ public class LFUCache<K,V> {
 		return cacheMap.containsKey(key);
 	}
 	
-	public V get(K key){
-		if(cacheMap.containsKey(key)){
-			synchronized(this){
-				if(cacheMap.containsKey(key)){
-					Item item=cacheMap.get(key);
-					item.lastUseTime=time++;
-					item.useCount++;
-					queue.remove(item);
-					queue.remove(item);
-					queue.add(item);
-					return item.value;
-				}
-				return null;
-			}
-		}else{
-			return null;
-		}
-	}
+    public V get(K key) {
+        if(cacheMap.containsKey(key)) {
+                synchronized(this) {
+                        if(cacheMap.containsKey(key)) {
+                                Item item = cacheMap.get(key);
+                                item.lastUseTime = time++;
+                                item.useCount = item.useCount + 1;
+                                queue.remove(item);
+                                queue.add(item);
+                                return item.value;
+                        }
+                        else return null;
+                }
+        }
+        else return null;
+    }
+
 	
 	
 	private int maxSize=1000;

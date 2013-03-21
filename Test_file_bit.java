@@ -92,9 +92,9 @@ public class Test_file_bit {
             //start print Inverted index to file
             
 	            Iterator  ilter1= index.postingMap.entrySet().iterator();
-	      		OutputStreamWriter fout;
+	            BufferedWriter fout;
 	      		try {
-	      			fout = new OutputStreamWriter(new FileOutputStream("result/inverted_index_"+file_num+".txt"));
+	      			fout = new BufferedWriter(new FileWriter("result/inverted_index_"+file_num+".txt"));
 	      			while (ilter1.hasNext())
 	      	        {
 	      	             Map.Entry entry1 = (Map.Entry) ilter1.next();
@@ -112,6 +112,7 @@ public class Test_file_bit {
 	      	             }
 	      	             fout.write(post_string+"\n");
 	      	         }
+	      			fout.flush();
 	      			fout.close();
 	      		} catch (IOException e) {
 	      			// TODO Auto-generated catch block
@@ -141,8 +142,6 @@ public class Test_file_bit {
 		byte[] metadata, compressedChunk = null;
 		List<Integer> docIDsInList=new ArrayList<Integer>();
 		List<Byte> freqsInList=new ArrayList<Byte>();	
-//		Binary file_write = new Binary();
-//		file_write.initial_output(filename);
 		//read lines after merge
 		while ((line = stdoutReader.readLine()) != null) {
 			previousWord=word[0];
@@ -194,11 +193,11 @@ public class Test_file_bit {
 				}
 				fout.write(termfreqs); //3.write doc frequency right after docId chunks
 				/*insert the lexinfo to lexicon map*/
-				index.inSertIntoLexMap(previousWord,docFreq,filename,startOffset,offset,chunkNum);
+				index.inSertIntoLexMap(previousWord,docFreq,filename,startOffset,offset-startOffset,chunkNum);
 				/*check out inverted index file*/
 				wordTotalNum++;
 				if ((wordTotalNum&0xFFF)==0xFFF){// store 4096 words in one index file;
-					startOffset=0;
+					offset=0;
 					fout.flush();//force to write out the buffer;
 			        fout.close();
 //					file_write.output.close();			        
