@@ -25,6 +25,7 @@ public class WordMap {
 	 * 2.int[0] store the document frequency, and int[1] store the address of the indices(postings);
 	 */
 	public Map<String,int[]> lexiconMap;
+	public double averageLen;
 	
 	WordMap(){
 		//postingMap=new TreeMap<String,HashMap<Integer,TermInDoc>> ();
@@ -38,9 +39,9 @@ public class WordMap {
 	 * Note: increment the document frequency ONLY ONCE for each file;
 	 */
 	public void inSertIntoLexMap(String word,int docFreq,int filename,int startOffset,int len,int chunkNum){
-		int[] lexInfo=lexiconMap.get(word); //get the array of (time frequency + posting index) info of the give word;
+//		int[] lexInfo=lexiconMap.get(word); //get the array of (time frequency + posting index) info of the give word;
 //		if(lexInfo==null){  //if the lexicon is not existed
-			lexInfo=new int[5];
+			int[] lexInfo=new int[5];
 			lexInfo[0]=docFreq;  //document frequency;
 			lexInfo[1]=filename; // index file number;
 			lexInfo[2]=startOffset; //start point of the inverted list in the index file;
@@ -84,6 +85,53 @@ public class WordMap {
 		}
 	}
 	
+	/*set up lexicon map from the file
+	 */
+	public void setupLexicon(String lexicon_file) throws IOException
+	{
+		BufferedReader in = null;
+		try {
+			in = new BufferedReader(new FileReader(lexicon_file));
+			String line;
+			while ((line = in.readLine()) != null) 
+			{
+				String word_lexinfo[] = line.split(" ");
+				inSertIntoLexMap(word_lexinfo[0],Integer.parseInt(word_lexinfo[1]),Integer.parseInt(word_lexinfo[2]),
+						Integer.parseInt(word_lexinfo[3]),Integer.parseInt(word_lexinfo[4]),Integer.parseInt(word_lexinfo[5]));
+				//insert into lexicon
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		finally{in.close();}
+	}
+	
+	/*set up url map from the file
+	 * */
+	public void setupUrl(String url_file) throws IOException
+	{
+		long length = 0;
+		BufferedReader in = null;
+		try {
+			in = new BufferedReader(new FileReader(url_file));
+			String line;
+			while ((line = in.readLine()) != null) 
+			{
+				String words[] = line.split(" ");
+				urlDocMap.put(Integer.parseInt(words[0]),new UrlDocLen(words[1],Integer.parseInt(words[2])));
+				length += Integer.parseInt(words[2]);
+			}
+			//calculate the average length of documents in the collection
+			averageLen = (double)length/urlDocMap.size();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		finally{in.close();}
+		
+	}
+	
 	public Byte convertStrToByte(String str){
 		return (byte)str.charAt(0);		
 	}
@@ -96,17 +144,6 @@ public class WordMap {
 		}
 	}
 } 
-
-/*a class to store all contexts and the term frequency of a given word in a give DocId*/
-//class TermInDoc{
-//	int termFreq; //term frequency in a document;
-//	List<Byte> contexts;  // all contexts of the given word in a document;
-//	public TermInDoc(Byte context){
-//		contexts=new LinkedList<Byte>();
-//		contexts.add(context);
-//		termFreq=1;
-//	}
-//}
 
 
 /*a class to store the url and document length of a given docId*/
@@ -138,5 +175,16 @@ class UrlDocLen{
 ////		lexInfo.setElementAt(temp, 0);
 //		lexInfo[0]++;
 //		lexiconMap.put(word, lexInfo);
+//	}
+//}
+
+/*a class to store all contexts and the term frequency of a given word in a give DocId*/
+//class TermInDoc{
+//	int termFreq; //term frequency in a document;
+//	List<Byte> contexts;  // all contexts of the given word in a document;
+//	public TermInDoc(Byte context){
+//		contexts=new LinkedList<Byte>();
+//		contexts.add(context);
+//		termFreq=1;
 //	}
 //}

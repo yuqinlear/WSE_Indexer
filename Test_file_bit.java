@@ -269,9 +269,9 @@ public class Test_file_bit {
 				String lexicon_string = new String();//store every line of url_index
 				Map.Entry entry1 = (Map.Entry) ilter1.next();
 				theWord = (String) entry1.getKey();
-	            int[] tf_offset = (int[]) entry1.getValue();//term frequence and offset of inverted file
+	            int[] lexinfo = (int[]) entry1.getValue();//term frequence and offset of inverted file
 //	            lexicon_string += word+" "+tf_offset.elementAt(0)+" "+tf_offset.elementAt(1);
-	            lexicon_string += theWord+" "+tf_offset[0]+" "+tf_offset[1]+" "+tf_offset[2];
+	            lexicon_string = theWord+" "+lexinfo[0]+" "+lexinfo[1]+" "+lexinfo[2]+" "+lexinfo[3]+" "+lexinfo[4];
 	            fout2.write(lexicon_string+"\n");
 	        }
 			fout2.flush();

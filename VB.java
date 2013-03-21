@@ -94,6 +94,24 @@ public class VB {
         return numbers;
     }
     
+    public static List<Integer> VBDECODE(byte[] bytestream, int off, int len) {
+        List<Integer> numbers = new ArrayList<Integer>();
+        int n = 0;
+        for (int i=off; i<(off+len); i++) {
+                if ( (bytestream[i] & (byte)(0x80)) == 0 ){
+                        n = 128*n + bytestream[i];
+                        numbers.add(n);
+                        n = 0;
+                }
+                else {
+                        byte b = (byte)(bytestream[i] & 0x7F); //Achieves the effect of -= 128. 
+                        n = 128*n + b;
+                }
+        }
+        
+        return numbers;
+    }
+    
 //    public static void main(String[] args) throws Exception {
 //        //Testing
 //        List<Integer> numbers = new ArrayList<Integer>();
