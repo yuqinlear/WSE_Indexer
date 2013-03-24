@@ -112,16 +112,37 @@ public class VB {
         return numbers;
     }
     
+    
+    public static int firstDocIdOfChunk(byte[] bytestream, int chunkNum, int chunkID) {//return the first value of the chunk
+        int n = 0;
+        int offset = chunkNum;//offset of docId is equal to  chunk number of this inverted list
+        for(int i=0; i< chunkID; i++) {
+        	offset += (int)bytestream[i] & 0xff;
+        }
+        for (int i=offset; ; i++) {
+            if ( (bytestream[i] & (byte)(0x80)) == 0 ){
+                    n = 128*n + bytestream[i];
+                    return n;
+            }
+            else {
+                    byte b = (byte)(bytestream[i] & 0x7F); //Achieves the effect of -= 128. 
+                    n = 128*n + b;
+            }
+        }
+    }
+    
+    
 //    public static void main(String[] args) throws Exception {
 //        //Testing
-//        List<Integer> numbers = new ArrayList<Integer>();
-//        numbers.add(2); 
-//        numbers.add(120); 
-//        numbers.add(65536);
+////        List<Integer> numbers = new ArrayList<Integer>();
+////        numbers.add(2); 
+////        numbers.add(120); 
+////        numbers.add(65536);
+//    	int numbers[] = {2,120,65536,65547,8913248};
 //        byte[] tmp = VB.VBENCODE(numbers);
-//        numbers = VB.VBDECODE(tmp);
+//        List<Integer> umcompress = VB.VBDECODE(tmp);
 ////        byte[] result = VB.VBENCODE(numbers);
 //        System.out.println("Finish");   
-//        System.out.println(numbers);
+//        System.out.println(umcompress);
 //    }
 }
