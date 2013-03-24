@@ -17,15 +17,23 @@ public class IndexReader {
 		
 //		cache=new LFUCache(2000);// construct by using the number of inverted list
 	}
-	
-//	public List<String> query(String[] keywords){
+//	
+//	public List<String> query(String[] keywords) throws FileNotFoundException, IOException{
+//		//open list
+//		int MAXINT=0x7FFFFFFF;
+//		byte[][] lp = new byte[keywords.length][];
 //		for (int i=0;i<keywords.length;i++){
-//			openList(keywords[i]);
+//			lp[i] = openList(keywords[i]);
 //		}
 //		int docId=0;
-//		while(docId){
-//			
+//		//DAAT query process
+//		while(docId<= MAXINT){
+//			docId = 
 //		}
+//		
+//		
+//		
+//		return null;
 //	}
 	
 //	public int getFreq(byte[] invList, int docId){
@@ -33,7 +41,7 @@ public class IndexReader {
 //	}
 	/**return the equal or larger docID of the inverted list by a given docId;
 	 */
-	public int[] nextGEQ(byte[] invList, int docId,int chunkNum){
+	public static int[] nextGEQ(byte[] invList, int docId,int chunkNum){
 		int [] docIdFreq=new int[2];
 		int upperBound=0,i=1,j,lengthOfChunks=0,chunksLen=0,temp,MAXINT=0x7FFFFFFF,postingPos=0;
 		for(j=0;j<chunkNum;j++){//the lengthOfChunks
@@ -41,8 +49,9 @@ public class IndexReader {
 		}
 		
 		if (chunkNum>1){
-			for (i=1;(i<chunkNum)&&(upperBound<=docId);i++){ //i equals the next chunk of scanning chunk 
+			for (i=1;i<chunkNum;i++){ //i equals the next chunk of scanning chunk 
 				upperBound=VB.firstDocIdOfChunk(invList,chunkNum,i);
+				if(upperBound>docId){break;};
 			}
 			if (upperBound==docId){
 				docIdFreq[0]=upperBound;
@@ -104,7 +113,7 @@ public class IndexReader {
 	public static void main(String[] args) throws FileNotFoundException, IOException {
 		// TODO Auto-generated method stub
 		wordmap=new WordMap();
-		String keyword="mall";
+		String keyword="you";
 		wordmap.setupLexicon("result/lexicon_index.txt");
 //		System.out.println(wordmap.lexiconMap.size());
 		wordmap.setupUrl("result/url_index.txt");
@@ -116,28 +125,30 @@ public class IndexReader {
 		for(int i=0; i<chunkNum;i++){
 			DocIDLen+=(int)invertedlist[i]&0xff;
 		}
+		int [] docIdFreq = nextGEQ(invertedlist, 0 ,chunkNum);
+		System.out.println("docID: "+docIdFreq[0]+"  Freq: "+docIdFreq[1]);
 		//uncompress
-		List<Integer> DocIDList=VB.VBDECODE(invertedlist,chunkNum,DocIDLen);
-		int docFreq = DocIDList.size();
-		for(int i=0; i<chunkNum; i++){
-            if((docFreq-i*64)>64){
-				for (int j=i*64+1;j<64;j++){
-					DocIDList.set(j,DocIDList.get(j)+DocIDList.get(j-1));
-				}
-            }
-            else{
-            	for (int j=i*64+1;j<docFreq;j++){
-					DocIDList.set(j,DocIDList.get(j)+DocIDList.get(j-1));
-				}
-            }
-		}	
-		
-		int temp=0;
-		for (Integer DocID:DocIDList){
-		System.out.print(DocID+" ");
-	//	System.out.print(((int)invertedlist[chunkNum+DocIDLen+temp]&0xff)+" ");
-		temp++;
-		}
+//		List<Integer> DocIDList=VB.VBDECODE(invertedlist,chunkNum,DocIDLen);
+//		int docFreq = DocIDList.size();
+//		for(int i=0; i<chunkNum; i++){
+//            if((docFreq-i*64)>64){
+//				for (int j=i*64+1;j<64;j++){
+//					DocIDList.set(j,DocIDList.get(j)+DocIDList.get(j-1));
+//				}
+//            }
+//            else{
+//            	for (int j=i*64+1;j<docFreq;j++){
+//					DocIDList.set(j,DocIDList.get(j)+DocIDList.get(j-1));
+//				}
+//            }
+//		}	
+//		
+//		int temp=0;
+//		for (Integer DocID:DocIDList){
+//		System.out.print(DocID+" ");
+//	//	System.out.print(((int)invertedlist[chunkNum+DocIDLen+temp]&0xff)+" ");
+//		temp++;
+//		}
 	}
 
 }
