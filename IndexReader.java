@@ -27,35 +27,59 @@ public class IndexReader {
 //			
 //		}
 //	}
-
-	public int nextGEQ(byte[] invList, int docId,int chunkNum){
-		int upperBound=0,i=1,j,offset,chunksLen=0,temp;
+	
+//	public int getFreq(byte[] invList, int docId){
+//		
+//	}
+	/**return the equal or larger docID of the inverted list by a given docId;
+	 */
+	public int[] nextGEQ(byte[] invList, int docId,int chunkNum){
+		int [] docIdFreq=new int[2];
+		int upperBound=0,i=1,j,lengthOfChunks=0,chunksLen=0,temp,MAXINT=0x7FFFFFFF,postingPos=0;
+		for(j=0;j<chunkNum;j++){//the lengthOfChunks
+			lengthOfChunks+=invList[j];
+		}
+		
 		if (chunkNum>1){
 			for (i=1;(i<chunkNum)&&(upperBound<=docId);i++){ //i equals the next chunk of scanning chunk 
-				upperBound=firstDocIdOfChunk(invList,chunkNum,i);
+				upperBound=VB.firstDocIdOfChunk(invList,chunkNum,i);
 			}
-			if (upperBound==docId){return upperBound;}
-			if (i==chunkNum){return MAX;}
+			if (upperBound==docId){
+				docIdFreq[0]=upperBound;
+				docIdFreq[1]=invList[chunkNum+lengthOfChunks+i*64];
+				return docIdFreq;}
 			for (j=0;j<i-1;j++){ //calculate the offset from the end of metadata to the beginning of scanning chunk;
 				chunksLen+=(int)invList[j]&0xff;
 			}
 		}
-		offset=chunkNum+chunksLen;
+		
 		List<Integer> uncompressedChunk=VB.VBDECODE(invList,chunkNum+chunksLen,(int)invList[i-1]&0xff);
 		temp=uncompressedChunk.get(0);
-		i=0;	
-		
-		for(i=1;i<uncompressedChunk.size();i++){
+		for(j=1;j<uncompressedChunk.size();j++){
 			if (docId>temp){
-				temp+=uncompressedChunk.get(i);
+				temp+=uncompressedChunk.get(j);
 			}else{
-				return temp;
+				docIdFreq[0]=temp;
+				docIdFreq[1]=invList[chunkNum+lengthOfChunks+(i-1)*64+j-1];
+				return docIdFreq;
 			}
 		}
-		if (docId>temp){// compare with the last element in the chunk;
-			return upperBound;
-		}else{
-			return temp;
+		
+		// compare with the last element in the chunk;
+		if (docId>temp&&(i==chunkNum)){//docId > all the did in the list;
+			docIdFreq[0]=MAXINT;
+			docIdFreq[1]=0;
+			return docIdFreq;	
+		} 
+		else if(docId>temp){
+			docIdFreq[0]=upperBound;
+			docIdFreq[1]=invList[chunkNum+lengthOfChunks+i*64];
+			return docIdFreq;
+			}
+		else{
+		docIdFreq[0]=temp;
+		docIdFreq[1]=invList[chunkNum+lengthOfChunks+(i-1)*64+j-1];
+		return docIdFreq;
 		}
 		
 	}
