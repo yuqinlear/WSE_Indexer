@@ -101,18 +101,18 @@ public class command {
 	
 	
 	//input: query words  output: top-10 urls
-	public static List<String> query(String[] words)
+	public static List<String> query(String[] keywords)
 	{
 		List<String> url = new ArrayList<String>();
 		//Map<String, head> head;
 		//scan if in the cache
-		for(int i=0; i<words.length; i++)
+		for(int i=0; i<keywords.length; i++)
 		{
 			//offset = check_in_cache();
 			//maintain cache
 		}
 		//scan if in the lexicon
-		for(int i=0; i<words.length; i++)
+		for(int i=0; i<keywords.length; i++)
 		{
 			//offset = check_in_lexicon();
 			
@@ -120,6 +120,10 @@ public class command {
 			//maintain cache
 		}
 		
+		
+		for (int i=0;i<keywords.length;i++){
+			
+		}
 		//
 		/*
 		 * Map<DocID, score> TAAT;

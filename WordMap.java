@@ -12,7 +12,7 @@ public class WordMap {
 	 *  2. Map TermInDoc objects to a specific doc in the postings of the specific word;
 	 *  3. There are term frequency stored for the specific document of the  specific word;
 	 */
-	public TreeMap<String, HashMap<Integer, Integer>> postingMap;
+	public TreeMap<String, TreeMap<Integer, Integer>> postingMap;
 	
 	/*urlDocMap:
 	 * 1. Map a document ID to a UrlDocLen object;
@@ -53,6 +53,10 @@ public class WordMap {
 //			lexiconMap.put(word, lexInfo);
 //		}
 	}
+	//overload inSertIntoLexMap
+	public void inSertIntoLexMap(String word){
+		lexiconMap.put(word,null);
+	}
 	
 	/* insert the url and document length into the urlDocMap for the give doc ID;
 	 */
@@ -65,9 +69,9 @@ public class WordMap {
 	 * TermInDoc object store all contexts and the term frequency of a given word in a give DocId
 	 */
 	public void inSertIntoPostingMap(String word,Integer docId,int contextWeight){
-		HashMap<Integer, Integer> termFreqMap=postingMap.get(word); // find the termDocMap for the give map;	
+		TreeMap<Integer, Integer> termFreqMap=postingMap.get(word); // find the termDocMap for the give map;	
 		if(termFreqMap==null){    // the word is first time occurs;
-			termFreqMap=new HashMap<Integer,Integer>();
+			termFreqMap=new TreeMap<Integer,Integer>();
 			termFreqMap.put(docId,contextWeight); // put the doc ID and context into termDocMap;
 			postingMap.put(word, termFreqMap);
 		}else{   // there is a mapping for this word;
@@ -85,7 +89,7 @@ public class WordMap {
 		}
 	}
 	
-	/*set up lexicon map from the file
+	/*set up lexicon map from the filewordmap
 	 */
 	public void setupLexicon(String lexicon_file) throws IOException
 	{

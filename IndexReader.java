@@ -18,10 +18,50 @@ public class IndexReader {
 //		cache=new LFUCache(2000);// construct by using the number of inverted list
 	}
 	
+//	public List<String> query(String[] keywords){
+//		for (int i=0;i<keywords.length;i++){
+//			openList(keywords[i]);
+//		}
+//		int docId=0;
+//		while(docId){
+//			
+//		}
+//	}
 
+	public int nextGEQ(byte[] invList, int docId,int chunkNum){
+		int upperBound=0,i=1,j,offset,chunksLen=0,temp;
+		if (chunkNum>1){
+			for (i=1;(i<chunkNum)&&(upperBound<=docId);i++){ //i equals the next chunk of scanning chunk 
+				upperBound=firstDocIdOfChunk(invList,chunkNum,i);
+			}
+			if (upperBound==docId){return upperBound;}
+			if (i==chunkNum){return MAX;}
+			for (j=0;j<i-1;j++){ //calculate the offset from the end of metadata to the beginning of scanning chunk;
+				chunksLen+=(int)invList[j]&0xff;
+			}
+		}
+		offset=chunkNum+chunksLen;
+		List<Integer> uncompressedChunk=VB.VBDECODE(invList,chunkNum+chunksLen,(int)invList[i-1]&0xff);
+		temp=uncompressedChunk.get(0);
+		i=0;	
+		
+		for(i=1;i<uncompressedChunk.size();i++){
+			if (docId>temp){
+				temp+=uncompressedChunk.get(i);
+			}else{
+				return temp;
+			}
+		}
+		if (docId>temp){// compare with the last element in the chunk;
+			return upperBound;
+		}else{
+			return temp;
+		}
+		
+	}
 
 	
-	public byte[] readIndex(String keyword) throws FileNotFoundException,IOException {
+	public byte[] openList(String keyword) throws FileNotFoundException,IOException {
 		/*first check the cache*/
 //		cache.
 		int[] lexInfo=wordmap.lexiconMap.get(keyword);//lexInfo=int[5];
@@ -46,7 +86,7 @@ public class IndexReader {
 		wordmap.setupUrl("result/url_index.txt");
 		IndexReader reader=new IndexReader();
 		int[] lexinfo=wordmap.lexiconMap.get(keyword);
-		byte[] invertedlist=reader.readIndex(keyword);
+		byte[] invertedlist=reader.openList(keyword);
 		int chunkNum=(int)lexinfo[4]&0xff;
 		int DocIDLen=0;// length of DocIDs by bytes
 		for(int i=0; i<chunkNum;i++){
