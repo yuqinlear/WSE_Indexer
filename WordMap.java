@@ -27,6 +27,8 @@ public class WordMap {
 	public Map<String,int[]> lexiconMap;
 	public double averageLen;
 	
+	public int totalPageNum;
+	
 	WordMap(){
 		//postingMap=new TreeMap<String,HashMap<Integer,TermInDoc>> ();
 		urlDocMap=new HashMap<Integer, UrlDocLen> ();
@@ -120,6 +122,7 @@ public class WordMap {
 		try {
 			in = new BufferedReader(new FileReader(url_file));
 			String line;
+			totalPageNum = Integer.parseInt(in.readLine());
 			while ((line = in.readLine()) != null) 
 			{
 				String words[] = line.split(" ");

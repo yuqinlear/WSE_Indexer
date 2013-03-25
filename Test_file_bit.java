@@ -69,7 +69,7 @@ public class Test_file_bit {
             	//write parse result into files
             	if(strbuilder.length() == 0)
         		{
-        			document_ID++;
+//        			document_ID++;
         			continue;
         		}
             	System.out.println("page  "+document_ID+": \n");
@@ -266,6 +266,7 @@ public class Test_file_bit {
 		Iterator ilter1= index.urlDocMap.entrySet().iterator();
 		try {
 			BufferedWriter fout2 = new BufferedWriter(new FileWriter("result/url_index.txt"));
+			fout2.write((--document_ID)+"\n");
 			while (ilter1.hasNext())
 	        {
 				String url_string = new String();//store every line of url_index
@@ -273,7 +274,7 @@ public class Test_file_bit {
 	            int id = (int) entry1.getKey();
 	            UrlDocLen url = (UrlDocLen) entry1.getValue();
 				url_string += id+" "+url.url+" "+url.docLen; 
-				System.out.println(url_string);
+//				System.out.println(url_string);
 	            fout2.write(url_string+"\n");
 	        }
 			fout2.flush();
