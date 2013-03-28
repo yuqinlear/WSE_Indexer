@@ -15,6 +15,7 @@ import java.util.Queue;
 public class IndexReader {
 	public  static WordMap wordmap;
 	public LFUCache cache;
+	public static Queue<Page> resultQueue;
 	
 	IndexReader(){
 		//postingMap=new TreeMap<String,HashMap<Integer,TermInDoc>> ();
@@ -33,9 +34,9 @@ public class IndexReader {
 			}
 		});
 		
-		int keywordNum=keywords.length, docId=0,i;
+		int keywordNum=keywords.length, docId=0,tempDocId,i;
 		byte[][] invLists = new byte[keywordNum][];
-		int[][] docIdFreq=new int[keywordNum][2];
+		int[][] docIdFreq=new int[keywordNum][2];//docId+freq, [0]=docId, [1]=termFreq;
 		int[] chunkNums=new int[keywordNum];
 		for(i=0;i<keywordNum;i++){
 		invLists[i]=openList(keywords[i]);
@@ -44,16 +45,18 @@ public class IndexReader {
 		int[] lexinfo=wordmap.lexiconMap.get(keywords[i]);
 		chunkNums[i]=(int)lexinfo[4]&0xff;
 		}
-
+		//TODO sort the inverted list by the number of docId;
 		while(docId<0x7FFFFFFF){
-			docIdFreq[0]=nextGEQ(invLists[0],docId,chunkNums[0]);
-			docId=docIdFreq[0][0];
-			for(i=1;(i<keywordNum);i++){
-				docIdFreq[i]=nextGEQ(invLists[i],docId,chunkNums[0]);
+			docIdFreq[0]=nextGEQ(invLists[0],docId,chunkNums[0]);//get the next GEQ docID+TF in the inverted list of keywords[0];
+			if (docIdFreq[0][0]==0x7FFFFFFF){break;}
+			tempDocId=docId=docIdFreq[0][0];
+			for(i=1;i<keywordNum;i++){
+				docIdFreq[i]=nextGEQ(invLists[i],docId,chunkNums[i]);
+				tempDocId=docIdFreq[i][0];
 				if(docId!=docIdFreq[i][0]) {break;}
 			}
 			//no intersection;
-			if(docIdFreq[i][0]>docId){docId=docIdFreq[i][0];}
+			if(tempDocId>docId){docId=tempDocId;}
 			//intersection;
 			else{
 				/*BM25*/				
@@ -65,6 +68,23 @@ public class IndexReader {
 		return rankHeap;
 	}
 	
+	/*
+	 * docIdFreq[i][j], i=number of keywords, j=0 docId, j=1 frequency;
+	 */
+	public static double BM25(String[] keywords,int[][] docIdFreq){
+		double k1=1.2,b=0.75,K,score=0;
+		UrlDocLen ull;
+		int[] lexinfo;
+		//lexInfo[0]=docFreq;lexInfo[1]=filename;lexInfo[2]=startOffset;lexInfo[3]=length by bytes;lexInfo[4]=chunkNum; 
+		for (int i=0;i<keywords.length; i++){
+			lexinfo=wordmap.lexiconMap.get(keywords[i]);	
+			ull=wordmap.urlDocMap.get(docIdFreq[i][0]);
+			K=k1*((1-b)+b*ull.docLen/wordmap.averageLen);
+			score+=Math.log10(((wordmap.totalPageNum-lexinfo[0]+0.5)/(lexinfo[0]+0.5)))*((k1+1)*docIdFreq[i][1]/(K+docIdFreq[i][1]));
+		}
+		return score;
+	}
+	
 	class Page{
 		int docId;
 		double score;
@@ -74,28 +94,14 @@ public class IndexReader {
 		}
 	}
 	
-	
-	public static double BM25(String[] keywords,int[][] docIdFreq){//, double averageLen,int totalDocNum
-		double k1=1.2,b=0.75,K,score=0;
-		UrlDocLen ull;
-		int[] lexinfo;
-		//lexInfo[0]=docFreq;lexInfo[1]=filename;lexInfo[2]=startOffset;lexInfo[3]=length by bytes;lexInfo[4]=chunkNum; 
-		for (int i=0;i<keywords.length; i++){
-			lexinfo=wordmap.lexiconMap.get(keywords[i]);	
-			ull=wordmap.urlDocMap.get(keywords[i]);
-			K=k1*((1-b)+b*ull.docLen/wordmap.averageLen);
-			score+=Math.log10(((wordmap.totalPageNum-lexinfo[0]+0.5)/(lexinfo[0]+0.5)))*((k1+1)*docIdFreq[i][1]/(K+docIdFreq[i][1]));
-		}
-		return score;
-	}
-	
 
-	/**return the equal or larger docID of the inverted list by a given docId;
+	/**return the equal or larger docId and the term freq in the docId of the inverted list by a given docId;
+	 * return MAXINT if no docId matched
 	 */
 	public static int[] nextGEQ(byte[] invList, int docId,int chunkNum){
 		int [] docIdFreq=new int[2];
 		int upperBound=0,i=1,j,lengthOfChunks=0,chunksLen=0,temp,MAXINT=0x7FFFFFFF;
-		for(j=0;j<chunkNum;j++){//the lengthOfChunks
+		for(j=0;j<chunkNum;j++){//the length Of Chunks(docIDs);
 			lengthOfChunks+=invList[j];
 		}
 		
@@ -106,7 +112,7 @@ public class IndexReader {
 			}
 			if (upperBound==docId){
 				docIdFreq[0]=upperBound;
-				docIdFreq[1]=invList[chunkNum+lengthOfChunks+i*64];
+				docIdFreq[1]=invList[chunkNum+lengthOfChunks+(i-1)*64];//get the term frequency corresponding to the docId
 				return docIdFreq;}
 			for (j=0;j<i-1;j++){ //calculate the offset from the end of metadata to the beginning of scanning chunk;
 				chunksLen+=(int)invList[j]&0xff;
@@ -117,7 +123,7 @@ public class IndexReader {
 		temp=uncompressedChunk.get(0);
 		for(j=1;j<uncompressedChunk.size();j++){
 			if (docId>temp){
-				temp+=uncompressedChunk.get(j);
+				temp+=uncompressedChunk.get(j);// sum the gaps;
 			}else{
 				docIdFreq[0]=temp;
 				docIdFreq[1]=invList[chunkNum+lengthOfChunks+(i-1)*64+j-1];
@@ -164,20 +170,24 @@ public class IndexReader {
 	public static void main(String[] args) throws FileNotFoundException, IOException {
 		// TODO Auto-generated method stub
 		wordmap=new WordMap();
-		String keyword="you";
+		resultQueue=new PriorityQueue<Page>(10);
+		String[] keywords={"you","me"};
+		
 		wordmap.setupLexicon("result/lexicon_index.txt");
-//		System.out.println(wordmap.lexiconMap.size());
+////		System.out.println(wordmap.lexiconMap.size());
 		wordmap.setupUrl("result/url_index.txt");
 		IndexReader reader=new IndexReader();
-		int[] lexinfo=wordmap.lexiconMap.get(keyword);
-		byte[] invertedlist=reader.openList(keyword);
-		int chunkNum=(int)lexinfo[4]&0xff;
-		int DocIDLen=0;// length of DocIDs by bytes
-		for(int i=0; i<chunkNum;i++){
-			DocIDLen+=(int)invertedlist[i]&0xff;
-		}
-		int [] docIdFreq = nextGEQ(invertedlist, 0 ,chunkNum);
-		System.out.println("docID: "+docIdFreq[0]+"  Freq: "+docIdFreq[1]);
+		resultQueue=reader.query(keywords);
+		System.out.println("done");
+//		int[] lexinfo=wordmap.lexiconMap.get(keyword);
+//		byte[] invertedlist=reader.openList(keyword);
+//		int chunkNum=(int)lexinfo[4]&0xff;
+//		int DocIDLen=0;// length of DocIDs by bytes
+//		for(int i=0; i<chunkNum;i++){
+//			DocIDLen+=(int)invertedlist[i]&0xff;
+//		}
+//		int [] docIdFreq = nextGEQ(invertedlist, 0 ,chunkNum);
+//		System.out.println("docID: "+docIdFreq[0]+"  Freq: "+docIdFreq[1]);
 		//uncompress
 //		List<Integer> DocIDList=VB.VBDECODE(invertedlist,chunkNum,DocIDLen);
 //		int docFreq = DocIDList.size();
