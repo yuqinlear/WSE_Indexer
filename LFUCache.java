@@ -12,14 +12,21 @@ public class LFUCache<K,V> {
 		cache.put(2, "2");
 		cache.put(3, "3");
 		cache.put(4, "4");
+		cache.get(4);
+		cache.get(3);
+		cache.get(3);
 		cache.put(5, "5");
-		cache.get(5);
-//		cache.put(6, "1");
-//		cache.put(1, "1");
-//		cache.put(1, "1");
-//		cache.put(1, "1");
-//		cache.put(1, "1");
-		System.out.println(cache.queue.peek());
+		cache.put(6, "6");
+		cache.put(7, "7");
+		cache.put(8, "8");
+//		cache.put(9, "9");
+
+		System.out.println(cache.queue.poll().value);
+		System.out.println(cache.queue.poll().value);
+		System.out.println(cache.queue.poll().value);
+		System.out.println(cache.queue.poll().value);
+		System.out.println(cache.queue.poll().value);
+
 
 	}
 	
