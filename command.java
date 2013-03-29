@@ -36,8 +36,22 @@ public class command {
 			    String input = bufferRead.readLine();
 			    System.out.println(input);
                 String[] words = input.split(" ");
-                //query
-                List<String> results = query(words);//result are urls, 10
+                List<String> results;
+                if(words.length>10)
+                {
+                	//cut words into 10
+                    String[] cutWord = new String[10];
+                    for(int i=0; i<10; i++)
+                    {
+                    	cutWord[i] = words[i];
+                    }
+                    results = query(words);//result are urls, 10
+                }
+                else
+                {
+                	results = query(words);//result are urls, 10
+                }
+                
                 for(int i=0; i < results.size(); i++)
                 {
                 	System.out.println(results.get(i));
