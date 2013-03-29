@@ -1,6 +1,4 @@
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -25,8 +23,7 @@ public class WordMap {
 	 * 2.int[0] store the document frequency, and int[1] store the address of the indices(postings);
 	 */
 	public Map<String,int[]> lexiconMap;
-	public double averageLen;
-	
+	public double averageLen;	
 	public int totalPageNum;
 	
 	WordMap(){
@@ -107,7 +104,6 @@ public class WordMap {
 				//insert into lexicon
 			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		finally{in.close();}
@@ -132,7 +128,6 @@ public class WordMap {
 			//calculate the average length of documents in the collection
 			averageLen = (double)length/urlDocMap.size();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		finally{in.close();}

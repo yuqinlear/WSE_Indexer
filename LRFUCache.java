@@ -3,11 +3,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
 
-public class LFUCache<K,V> implements Cache<K,V>{
+public class LRFUCache<K,V>implements Cache<K,V> {
 
 	
 	public static void main(String[] args) {
-		LFUCache<Integer, String> cache=new LFUCache<Integer,String>(5);
+		LRFUCache<Integer, String> cache=new LRFUCache<Integer,String>(5,1000);
 		cache.put(1, "1");
 		cache.put(2, "2");
 		cache.put(3, "3");
@@ -26,20 +26,22 @@ public class LFUCache<K,V> implements Cache<K,V>{
 		System.out.println(cache.queue.poll().value);
 		System.out.println(cache.queue.poll().value);
 		System.out.println(cache.queue.poll().value);
-
-
 	}
-	
-	public LFUCache(int maxSize){
+	/**LRFU combine the advantage of LFU and RFU
+	 * @param maxSize  the size of the cache
+	 * @param factor a number greater or equal to 0  to adjust the time weight, 
+	 *  when factor is unlimited large, it is FLU
+	 *  when the factor decrease =>higher time weight=>lower weight to previous scores,thus it moves closer to RLU;
+	 */
+	public LRFUCache(int maxSize,int factor){
 		this.maxSize=maxSize;
+		this.factor=factor+1; //smooth 0 to 1;
 		cacheMap=new HashMap<K,Item>(maxSize);
 		queue=new PriorityQueue<Item>(maxSize,new Comparator<Item>(){
 			public int compare(Item it1, Item it2){
 				if(it1==it2){return 0;}
-				if(it1.useCount>it2.useCount) {return 1;}
-				else if(it1.useCount<it2.useCount){return -1;}
-				else if(it1.lastUseTime>it2.lastUseTime){return 1;}
-				else if(it1.lastUseTime<it2.lastUseTime){return -1;}
+				if(it1.score>it2.score) {return 1;}
+				else if(it1.score<it2.score){return -1;}
 				else return 0;
 			}
 		});
@@ -66,12 +68,16 @@ public class LFUCache<K,V> implements Cache<K,V>{
 	}
 	
     public V get(K key) {
+    	int interval,timeWeight;
         if(cacheMap.containsKey(key)) {
                 synchronized(this) {
                         if(cacheMap.containsKey(key)) {
                                 Item item = cacheMap.get(key);
-                                item.lastUseTime = time++;
-                                item.useCount = item.useCount + 1;
+                                //LRFU  when factor=1, it is almost RLU, when factor=unlimited big, it is almost FLU;
+                                interval=globalTime-item.lastUseTime;//interval betw. current time and lastUseTime 
+                                item.lastUseTime = globalTime++;
+                                timeWeight=(int) (interval/factor)+1;
+                                item.score = item.score/timeWeight + 1; //timeWeight
                                 queue.remove(item);
                                 queue.add(item);
                                 return item.value;
@@ -85,19 +91,20 @@ public class LFUCache<K,V> implements Cache<K,V>{
 	
 	
 	private int maxSize=1000;
-	private int time=0;
+	private int globalTime=0; //a global time counter
+	private int factor;
 	private PriorityQueue<Item> queue;
 	private Map<K,Item> cacheMap;
 	
 	private class Item{
 		K key;
 		V value;
-		int useCount=0;
+		int score=0;
 		int lastUseTime=0;
 		public Item(K key,V value){
 			this.key=key;
 			this.value=value;
-			lastUseTime=time++;
+			lastUseTime=globalTime++;
 		}
 	}
 
