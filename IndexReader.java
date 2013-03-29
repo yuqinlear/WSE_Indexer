@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -14,18 +15,20 @@ import java.util.Queue;
 
 public class IndexReader {
 	public WordMap wordmap;
-	public LFUCache<String, byte[]> cache;
-	public static Queue<Page> resultQueue;
+	public LFUCache<String, byte[]> listCache;
+	public LFUCache<String[], String[]> resultCache;
+	public String[] result;
 	
 	IndexReader(){
 		wordmap=new WordMap();
-		//postingMap=new TreeMap<String,HashMap<Integer,TermInDoc>> ();
-		
-		cache=new LFUCache<String,byte[]>(200);// construct by using the number of inverted list
+		//postingMap=new TreeMap<String,HashMap<Integer,TermInDoc>> ();		
+		listCache=new LFUCache<String,byte[]>(200);// construct by using the number of inverted list
+		resultCache=new LFUCache<String[],String[]>(200);
 	}
 
-	public Queue<Page> query(String[] keywords) throws FileNotFoundException, IOException{
+	public String[] query(String[] keywords) throws FileNotFoundException, IOException{
 		//open list
+		String[] result=new String[10];
 		Queue<Page> rankHeap=new PriorityQueue<Page>(100,new Comparator<Page>(){
 			public int compare(Page p1, Page p2){
 				if(p1==p2){return 0;}
@@ -34,16 +37,27 @@ public class IndexReader {
 			}
 		});
 		
+		/*convert keywords to lowercase*/
+		for(int i=0;i<keywords.length;i++){
+			keywords[i]=keywords[i].toLowerCase();
+		}
+		
+		/*result cache*/
+		Arrays.sort(keywords);
+		if (resultCache.contains(keywords)){
+			return resultCache.get(keywords);
+		}
 		int keywordNum=keywords.length, docId=0,tempDocId,i;
 		byte[][] invLists = new byte[keywordNum][];
 		int[][] docIdFreq=new int[keywordNum][2];//docId+freq, [0]=docId, [1]=termFreq;
 		int[] chunkNums=new int[keywordNum];
+		/*list cache*/
 		for(i=0;i<keywordNum;i++){
-			if(cache.contains(keywords[i])){
-				invLists[i]=(byte[]) cache.get(keywords[i]);
+			if(listCache.contains(keywords[i])){
+				invLists[i]=(byte[]) listCache.get(keywords[i]);
 			}
 			invLists[i]=openList(keywords[i]);
-			cache.put(keywords[i],invLists[i]);
+			listCache.put(keywords[i],invLists[i]);
 		}
 		for(i=0;i<keywordNum;i++){
 		int[] lexinfo=wordmap.lexiconMap.get(keywords[i]);
@@ -69,7 +83,18 @@ public class IndexReader {
 			}
 		}		
 		
-		return rankHeap;
+		for (i=0;i<10;i++){
+			if (!rankHeap.isEmpty()){
+			Page page=rankHeap.poll();
+			UrlDocLen urlInfo=wordmap.urlDocMap.get((page.docId));
+			result[i]=urlInfo.url;
+			}
+//			else{
+//			result[i]="";
+//			}
+		}
+		resultCache.put(keywords, result);
+		return result;
 	}
 	
 	/*
@@ -167,35 +192,29 @@ public class IndexReader {
 		readin.seek(lexInfo[2]);
 		readin.read(invertedlist);
 		return invertedlist;
-		
 	}
-	
 	
 	public static void main(String[] args) throws FileNotFoundException, IOException {
 		// TODO Auto-generated method stub
 		IndexReader reader=new IndexReader();
-
-		resultQueue=new PriorityQueue<Page>(100);
 		String[] keywords={"English"};
-		for(int i=0;i<keywords.length;i++){
-			keywords[i]=keywords[i].toLowerCase();
-		}
-		
 		reader.wordmap.setupLexicon("result/lexicon_index.txt");
 ////		System.out.println(wordmap.lexiconMap.size());
 		reader.wordmap.setupUrl("result/url_index.txt");
-		resultQueue=reader.query(keywords);
-		for (int i=0;i<10;i++){
-			if (!resultQueue.isEmpty()){
-			Page page=resultQueue.poll();
-			UrlDocLen urlInfo=reader.wordmap.urlDocMap.get((page.docId));
-			System.out.println(urlInfo.url);
-			System.out.println(page.score);}
-			else{
-				System.out.println("page not found");
-			}
+		reader.result=reader.query(keywords);
+//		for (int i=0;i<10;i++){
+//			if (!resultQueue.isEmpty()){
+//			Page page=resultQueue.poll();
+//			UrlDocLen urlInfo=reader.wordmap.urlDocMap.get((page.docId));
+//			System.out.println(urlInfo.url);
+//			System.out.println(page.score);}
+//			else{
+//				System.out.println("page not found");
+//			}
+//		}
+		for (int i=0;i<reader.result.length;i++){
+			System.out.println(reader.result[i]);
 		}
-		System.out.println("done");
 //		int[] lexinfo=wordmap.lexiconMap.get(keyword);
 //		byte[] invertedlist=reader.openList(keyword);
 //		int chunkNum=(int)lexinfo[4]&0xff;
