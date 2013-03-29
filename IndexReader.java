@@ -87,6 +87,8 @@ public class IndexReader {
 			if (!rankHeap.isEmpty()){
 			Page page=rankHeap.poll();
 			UrlDocLen urlInfo=wordmap.urlDocMap.get((page.docId));
+			System.out.println(urlInfo.url);
+			System.out.println(page.score);
 			result[i]=urlInfo.url;
 			}
 //			else{
@@ -197,24 +199,15 @@ public class IndexReader {
 	public static void main(String[] args) throws FileNotFoundException, IOException {
 		// TODO Auto-generated method stub
 		IndexReader reader=new IndexReader();
-		String[] keywords={"English"};
+		String[] keywords={"Study","English","US"};
 		reader.wordmap.setupLexicon("result/lexicon_index.txt");
 ////		System.out.println(wordmap.lexiconMap.size());
 		reader.wordmap.setupUrl("result/url_index.txt");
 		reader.result=reader.query(keywords);
-//		for (int i=0;i<10;i++){
-//			if (!resultQueue.isEmpty()){
-//			Page page=resultQueue.poll();
-//			UrlDocLen urlInfo=reader.wordmap.urlDocMap.get((page.docId));
-//			System.out.println(urlInfo.url);
-//			System.out.println(page.score);}
-//			else{
-//				System.out.println("page not found");
-//			}
+
+//		for (int i=0;i<reader.result.length;i++){
+//			System.out.println(reader.result[i]);
 //		}
-		for (int i=0;i<reader.result.length;i++){
-			System.out.println(reader.result[i]);
-		}
 //		int[] lexinfo=wordmap.lexiconMap.get(keyword);
 //		byte[] invertedlist=reader.openList(keyword);
 //		int chunkNum=(int)lexinfo[4]&0xff;
