@@ -65,7 +65,7 @@ public class LRFUCache<K,V>implements Cache<K,V> {
 	
 	public boolean contains(K key){
 		return cacheMap.containsKey(key);
-	}
+	} 
 	
     public V get(K key) {
     	int interval,timeWeight;
